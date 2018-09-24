@@ -1,0 +1,15 @@
+{
+  "name": "tank",
+  "version": "0.0.0",
+  "description": "Tank",
+  "main": "server.js",
+  "author": {
+    "name": "Cesar Jaimes"
+  },
+  "dependencies": {
+    "express": "^4.16.3",
+    "phaser": "^3.12.0",
+    "pixi-spine": "^1.5.16",
+    "pixi.js": "^4.8.2"
+  }
+}

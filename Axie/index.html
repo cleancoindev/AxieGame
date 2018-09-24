@@ -1,0 +1,121 @@
+﻿<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Hello World</title>
+    <script src="/assets/pixi/pixi.min.js"></script>
+    <script src="/assets/pixi/pixi-spine.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js" crossorigin="anonymous"></script>
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/4.7.1/pixi.min.js"></script>-->
+</head>
+<body>
+    <script type="text/javascript">
+        var axie;
+        let type = "WebGL"
+        if (!PIXI.utils.isWebGLSupported()) {
+            type = "canvas"
+        }
+        PIXI.utils.sayHello(type)
+
+        //Create a Pixi Application
+        let app;
+        app = new PIXI.Application(800, 600, { backgroundColor: 0xffffff /*,  transparent: true*/ });
+        app.view.id = "canvas";
+        app.view.style.height = 480;
+        app.view.style.border = "1px solid #d9d9d9";
+
+        //Add the canvas that Pixi automatically created for you to the HTML document
+        document.body.appendChild(app.view);
+
+        $.get({ url: "https://axieinfinity.com/api/axies/150"}, function (data, status, xhr) {
+            if (data.stage < 3) {
+                alert("This axie is either a larva or an egg.")
+                return;
+            }
+            let imageName = "150" + ".png";
+            //prevent using cache...AI servers have wonky CORS config.
+            atlasURL = data["figure"]["atlas"];
+            imageURL = data["figure"]["images"][imageName];
+            modelURL = data["figure"]["model"];
+            let breakCache = "?" + escape(new Date());
+            //atlasURL += breakCache;
+            //imageURL += breakCache;
+            //modelURL += breakCache;
+
+            PIXI.loader.reset();
+            PIXI.loader
+                .add('axie_atlas', atlasURL)
+                .add('axie_png', imageURL)
+                .load(function (loader, resources) {
+                //cache false to circumvent server's cors caching. server should use vary: origin ? or access-control-allow-origin: *
+                $.get({ url: modelURL}, function (rawSkeletonData) {
+                    const rawAtlasData = resources['axie_atlas'].data; //your atlas file
+                    const spineAtlas = new PIXI.spine.core.TextureAtlas(rawAtlasData, function (line, callback) {
+                        //use hash name instead of name from file
+                        callback(PIXI.BaseTexture.from('axie_png'));
+                    });
+                    const spineAtlasLoader = new PIXI.spine.core.AtlasAttachmentLoader(spineAtlas);
+                    const spineJsonParser = new PIXI.spine.core.SkeletonJson(spineAtlasLoader);
+                    spineData = spineJsonParser.readSkeletonData(rawSkeletonData);
+                    axie = new PIXI.spine.Spine(spineData);
+                    //mirror image axie
+                    //axie.scale.x = -1;
+                    axie.scale.set(0.25, 0.25);
+                    axie.position.set(400, 300);
+                    axie.pivot.set(-axie.width * axie.scale.x * 0.75, -axie.height * axie.scale.y * 2);
+                    axie.stateData.setMix("walking", "appearing", 0.2);
+                    axie.stateData.setMix("appearing", "walking", 0.2);
+                    axie.stateData.setMix("bite", "walking", 0.2);
+                    axie.stateData.setMix("walking", "bite", 0.2);
+                    if (axie.state.hasAnimation('idle')) {
+                        axie.state.setAnimation(0, 'idle', true);
+                    } else if (axie.state.hasAnimation('walking')) {
+                        axie.state.setAnimation(0, 'walking', true);
+                    }
+                    axie.state.addListener({
+                        start: function (entry) {
+                            //console.log('animation is set at ' + entry.trackIndex);
+                            axie.activeAnim = true;
+                        }
+                    })
+                    axie.state.addListener({
+                        complete: function (entry) {
+                            //console.log('animation ended at ' + entry.trackIndex);
+                            axie.activeAnim = false;
+                        }
+                    })
+                    axie.alpha = 1;
+                    var _sprite = new PIXI.Graphics();
+                    _sprite.beginFill(0xFF0000);
+                    _sprite.drawRect(0, 0, 100, 100);
+                    _sprite.position.set(400, 300);
+                    app.stage.removeChildren();
+                    app.stage.addChild(axie);
+                    app.stage.addChild(_sprite);
+                    PIXI.spine.Spine.globalAutoUpdate = true;
+                    //var bounds = axie.getBounds();
+                    //axie.position.set(bounds.x + (bounds.width), bounds.y + (bounds.height));
+                    //axie.pivot.set(bounds.width / 2 / axie.scale.x, bounds.height / 2 / axie.scale.y);
+                    app.start();
+                });
+            });
+        });
+        document.addEventListener('keydown', (event) => {
+            const keyName = event.key;
+            if (keyName == 'b') {
+                if (!axie.activeAnim) {
+                    axie.state.setAnimation(0, 'bite', false);
+                    axie.state.addAnimation(0, 'walking', true, 0);
+                }
+            }
+            else if (keyName == 'ArrowRight') {
+                axie.rotation += Math.PI / 37;
+                console.log('rotation = ' + axie.rotation);
+            }
+            else if (keyName == 'ArrowLeft') {
+                axie.rotation -= Math.PI / 37;
+            }
+        });
+    </script>
+</body>
+</html>
