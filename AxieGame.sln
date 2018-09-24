@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27703.2035
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Tank", "Tank\Tank.njsproj", "{FAB620B7-9D98-4D28-B9DA-A60428745F73}"
+Project("{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}") = "Tank", "Axie\Axie.njsproj", "{FAB620B7-9D98-4D28-B9DA-A60428745F73}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
