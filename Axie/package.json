@@ -1,16 +1,18 @@
 {
-  "name": "tank",
+  "name": "axie",
   "version": "0.0.0",
-  "description": "Tank",
+  "description": "Axie",
   "main": "server.js",
   "author": {
     "name": "Cesar Jaimes"
   },
   "dependencies": {
     "express": "^4.16.3",
+    "node": "^10.11.0",
     "phaser": "^3.12.0",
     "pixi-spine": "^1.5.16",
     "pixi.js": "^4.8.2",
+    "server.js": "^1.0.0",
     "socket.io": "^2.1.1"
   }
 }
