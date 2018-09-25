@@ -17,14 +17,17 @@ app.get('/', function (req, res) {
 });
 
 io.on('connection', function(socket){
-    axies[socket.id] = {
-        x : 400,
-        y : 300
-    };
     socket.emit('idSent', {
-        id : socket.id, 
-        coordinates : axies[socket.id]
+        id: socket.id,
+        coordinates: {x: 400, y: 300}
     });
+    socket.on('axieLoaded', function () {
+        socket.emit('loadOtherPlayers', axies);
+    });
+    axies[socket.id] = {
+        x: 400,
+        y: 300
+    };
     socket.broadcast.emit('newPlayer', {
         id : socket.id, 
         coordinates : axies[socket.id]
@@ -36,13 +39,14 @@ io.on('connection', function(socket){
     });
     socket.on('updateAxieMovement', function(movement){
         //console.log('received data');
-        if(movement.up) axies[socket.id].y -=1;
-        if(movement.left) axies[socket.id].x -=1;
-        if(movement.down) axies[socket.id].y +=1;
-        if(movement.right) axies[socket.id].x +=1;
+        if(movement.up) axies[socket.id].y -=2;
+        if(movement.left) axies[socket.id].x -=2;
+        if(movement.down) axies[socket.id].y +=2;
+        if(movement.right) axies[socket.id].x +=2;
         socket.emit('updatedAxieMovement', axies);
     });
-    socket.on('disconnect', function(){
+    socket.on('disconnect', function () {
+        delete axies[socket.id];
         socket.broadcast.emit('userDisconnected', socket.id);
     });
 });

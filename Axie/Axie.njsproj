@@ -29,6 +29,7 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="public\game.js" />
     <Compile Include="public\pixi\pixi-spine.js" />
     <Compile Include="public\pixi\pixi.min.js" />
     <Compile Include="server.js" />
