@@ -28,7 +28,7 @@ function init() {
 
 
 socket.on('idSent', function (data) {
-    fetchNewAxie(null, null, null, function (_axie) {
+    fetchNewAxie(400, 300, null, function (_axie) {
         var item = {
             coordinates: data.coordinates,
             axie: _axie
@@ -36,7 +36,7 @@ socket.on('idSent', function (data) {
         axies[data.id] = item;
         myAxie = axies[data.id].axie;
         socket.emit('axieLoaded');
-    }, 400, 300);
+    });
 });
 socket.on('loadOtherPlayers', function (axies) {
     var axieArray = Object.keys(axies).map(function (key) {
@@ -69,7 +69,7 @@ socket.on('message', function (data) {
     //socket.emit('echo1', 'This is an echo');
 });
 socket.on('newPlayer', function (data) {
-    fetchNewAxie(function (_axie) {
+    fetchNewAxie(400, 300, data.id, function (_axie) {
         var item = {
             coordinates: data.coordinates,
             axie: _axie
