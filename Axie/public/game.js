@@ -28,7 +28,7 @@ function init() {
 
 
 socket.on('idSent', function (data) {
-    fetchNewAxie(400, 300, null, function (_axie) {
+    fetchNewAxie(400, 300, function (_axie) {
         var item = {
             coordinates: data.coordinates,
             axie: _axie
@@ -38,17 +38,22 @@ socket.on('idSent', function (data) {
         socket.emit('axieLoaded');
     });
 });
-socket.on('loadOtherPlayers', function (axies) {
-    var axieArray = Object.keys(axies).map(function (key) {
+socket.on('loadOtherPlayers', function (_axies) {
+    delete _axies[socket.id];
+    var axieArray = Object.keys(_axies).map(function (key) {
         return {
             id: key,
-            x: axies[key].x,
-            y: axies[key].y
+            x: _axies[key].x,
+            y: _axies[key].y
         };
     });
-    var itemCount = 0;
+	var itemCount = 0;
+	if (axieArray.length === 0) {
+		setInterval(function () { updateAxieMovement(); }, 1000 / 60);
+		gameReady = true;
+	}
     axieArray.forEach(function (axieData) {
-        fetchNewAxie(axieData.x, axieData.y, axieData.id, function (_axie) {
+        fetchNewAxie(axieData.x, axieData.y, function (_axie) {
             itemCount++;
             if (_axie !== false) {
                 var item = {
@@ -69,7 +74,7 @@ socket.on('message', function (data) {
     //socket.emit('echo1', 'This is an echo');
 });
 socket.on('newPlayer', function (data) {
-    fetchNewAxie(400, 300, data.id, function (_axie) {
+    fetchNewAxie(400, 300, function (_axie) {
         var item = {
             coordinates: data.coordinates,
             axie: _axie
@@ -154,74 +159,72 @@ document.addEventListener('keyup', (event) => {
     }
 });
 
-function fetchNewAxie(x, y, id, callback) {
-    if (id !== socket.id) {
-        $.get({ url: "https://axieinfinity.com/api/axies/150" }, function (data, status, xhr) {
-            if (data.stage < 3) {
-                alert("This axie is either a larva or an egg.")
-                return;
-            }
-            let imageName = "150" + ".png";
-            //prevent using cache...AI servers have wonky CORS config.
-            atlasURL = data["figure"]["atlas"];
-            imageURL = data["figure"]["images"][imageName];
-            modelURL = data["figure"]["model"];
-            let breakCache = "?" + escape(new Date());
-            //atlasURL += breakCache;
-            //imageURL += breakCache;
-            //modelURL += breakCache;
+function fetchNewAxie(x, y, callback) {
+    //if (id !== socket.id) {
+	$.get({ url: "https://axieinfinity.com/api/axies/150" }, function (data, status, xhr) {
+		if (data.stage < 3) {
+			alert("This axie is either a larva or an egg.")
+			return;
+		}
+		let imageName = "150" + ".png";
+		//prevent using cache...AI servers have wonky CORS config.
+		atlasURL = data["figure"]["atlas"];
+		imageURL = data["figure"]["images"][imageName];
+		modelURL = data["figure"]["model"];
+		let breakCache = "?" + escape(new Date());
+		//atlasURL += breakCache;
+		//imageURL += breakCache;
+		//modelURL += breakCache;
 
-            PIXI.loader.reset();
-            PIXI.loader
-                .add('axie_atlas', atlasURL)
-                .add('axie_png', imageURL)
-                .load(function (loader, resources) {
-                    //cache false to circumvent server's cors caching. server should use vary: origin ? or access-control-allow-origin: *
-                    $.get({ url: modelURL }, function (rawSkeletonData) {
-                        const rawAtlasData = resources['axie_atlas'].data; //your atlas file
-                        const spineAtlas = new PIXI.spine.core.TextureAtlas(rawAtlasData, function (line, callback) {
-                            //use hash name instead of name from file
-                            callback(PIXI.BaseTexture.from('axie_png'));
-                        });
-                        const spineAtlasLoader = new PIXI.spine.core.AtlasAttachmentLoader(spineAtlas);
-                        const spineJsonParser = new PIXI.spine.core.SkeletonJson(spineAtlasLoader);
-                        var spineData = spineJsonParser.readSkeletonData(rawSkeletonData);
-                        var newAxie = new PIXI.spine.Spine(spineData);
-                        //mirror image myAxie
-                        //myAxie.scale.x = -1;
-                        newAxie.scale.set(0.25, 0.25);
-                        newAxie.position.set(x, y);
-                        newAxie.pivot.set(-newAxie.width * newAxie.scale.x * 0.75, -newAxie.height * newAxie.scale.y * 2);
-                        newAxie.stateData.setMix("walking", "appearing", 0.2);
-                        newAxie.stateData.setMix("appearing", "walking", 0.2);
-                        newAxie.stateData.setMix("bite", "walking", 0.2);
-                        newAxie.stateData.setMix("walking", "bite", 0.2);
-                        if (newAxie.state.hasAnimation('idle')) {
-                            newAxie.state.setAnimation(0, 'idle', true);
-                        } else if (newAxie.state.hasAnimation('walking')) {
-                            newAxie.state.setAnimation(0, 'walking', true);
-                        }
-                        newAxie.state.addListener({
-                            start: function (entry) {
-                                //console.log('animation is set at ' + entry.trackIndex);
-                                newAxie.activeAnim = true;
-                            }
-                        })
-                        newAxie.state.addListener({
-                            complete: function (entry) {
-                                //console.log('animation ended at ' + entry.trackIndex);
-                                newAxie.activeAnim = false;
-                            }
-                        })
-                        newAxie.alpha = 1;
-                        //app.stage.removeChildren();
-                        app.stage.addChild(newAxie);
-                        //myAxie = newAxie;
-                        PIXI.spine.Spine.globalAutoUpdate = true;
-                        callback(newAxie);
-                    });
-                });
+		PIXI.loader.reset();
+		PIXI.loader
+			.add('axie_atlas', atlasURL)
+			.add('axie_png', imageURL)
+			.load(function (loader, resources) {
+				//cache false to circumvent server's cors caching. server should use vary: origin ? or access-control-allow-origin: *
+				$.get({ url: modelURL }, function (rawSkeletonData) {
+					const rawAtlasData = resources['axie_atlas'].data; //your atlas file
+					const spineAtlas = new PIXI.spine.core.TextureAtlas(rawAtlasData, function (line, callback) {
+						//use hash name instead of name from file
+						callback(PIXI.BaseTexture.from('axie_png'));
+					});
+					const spineAtlasLoader = new PIXI.spine.core.AtlasAttachmentLoader(spineAtlas);
+					const spineJsonParser = new PIXI.spine.core.SkeletonJson(spineAtlasLoader);
+					var spineData = spineJsonParser.readSkeletonData(rawSkeletonData);
+					var newAxie = new PIXI.spine.Spine(spineData);
+					//mirror image myAxie
+					//myAxie.scale.x = -1;
+					newAxie.scale.set(0.25, 0.25);
+					newAxie.position.set(x, y);
+					newAxie.pivot.set(-newAxie.width * newAxie.scale.x * 0.75, -newAxie.height * newAxie.scale.y * 2);
+					newAxie.stateData.setMix("walking", "appearing", 0.2);
+					newAxie.stateData.setMix("appearing", "walking", 0.2);
+					newAxie.stateData.setMix("bite", "walking", 0.2);
+					newAxie.stateData.setMix("walking", "bite", 0.2);
+					if (newAxie.state.hasAnimation('idle')) {
+						newAxie.state.setAnimation(0, 'idle', true);
+					} else if (newAxie.state.hasAnimation('walking')) {
+						newAxie.state.setAnimation(0, 'walking', true);
+					}
+					newAxie.state.addListener({
+						start: function (entry) {
+							//console.log('animation is set at ' + entry.trackIndex);
+							newAxie.activeAnim = true;
+						}
+					})
+					newAxie.state.addListener({
+						complete: function (entry) {
+							//console.log('animation ended at ' + entry.trackIndex);
+							newAxie.activeAnim = false;
+						}
+					})
+					newAxie.alpha = 1;
+					//app.stage.removeChildren();
+					app.stage.addChild(newAxie);
+					//myAxie = newAxie;
+					PIXI.spine.Spine.globalAutoUpdate = true;
+					callback(newAxie);
+				});
+			});
         });
-    }
-    else callback(false);
 }
