@@ -172,9 +172,9 @@ function fetchNewAxie(x, y, callback) {
 		imageURL = data["figure"]["images"][imageName];
 		modelURL = data["figure"]["model"];
 		let breakCache = "?" + escape(new Date());
-		//atlasURL += breakCache;
-		//imageURL += breakCache;
-		//modelURL += breakCache;
+		atlasURL += breakCache;
+		imageURL += breakCache;
+		modelURL += breakCache;
 
 		PIXI.loader.reset();
 		PIXI.loader
@@ -202,9 +202,9 @@ function fetchNewAxie(x, y, callback) {
 					newAxie.stateData.setMix("bite", "walking", 0.2);
 					newAxie.stateData.setMix("walking", "bite", 0.2);
 					if (newAxie.state.hasAnimation('idle')) {
-						newAxie.state.setAnimation(0, 'idle', true);
+						newAxie.state.setAnimation(0, 'idle', false);
 					} else if (newAxie.state.hasAnimation('walking')) {
-						newAxie.state.setAnimation(0, 'walking', true);
+						newAxie.state.setAnimation(0, 'walking', false);
 					}
 					newAxie.state.addListener({
 						start: function (entry) {

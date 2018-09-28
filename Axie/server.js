@@ -10,7 +10,12 @@ var io = require('socket.io')(server);
 var port = process.env.PORT || 1337;
 
 var axies = {};
-
+app.use(function (req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', 'http://http://86.143.229.152:1337');
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:1337/');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    next();
+});
 app.use('/assets' ,express.static('public'));
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
