@@ -1,12 +1,14 @@
 var socket = io();
 var myAxie = {};
 var axies = {};
+var keysPressed = 0;
 var movement = {
     up: false,
     down: false,
     right: false,
     left: false
 };
+const UPDATE_PER_SECOND = 30;
 var gameReady = false;
 let type = "WebGL"
 if (!PIXI.utils.isWebGLSupported()) {
@@ -28,13 +30,14 @@ function init() {
 
 
 socket.on('idSent', function (data) {
-    fetchNewAxie(400, 300, function (_axie) {
+    fetchNewAxie(data.coordinates.x, data.coordinates.y, function (_axie) {
         var item = {
             coordinates: data.coordinates,
             axie: _axie
         };
         axies[data.id] = item;
-        myAxie = axies[data.id].axie;
+		myAxie = axies[data.id].axie;
+		myAxie.sendingMovementData = false;
         socket.emit('axieLoaded');
     });
 });
@@ -49,7 +52,7 @@ socket.on('loadOtherPlayers', function (_axies) {
     });
 	var itemCount = 0;
 	if (axieArray.length === 0) {
-		setInterval(function () { updateAxieMovement(); }, 1000 / 60);
+		//setInterval(function () { updateAxieMovement(); }, 1000 / UPDATE_PER_SECOND);
 		gameReady = true;
 	}
     axieArray.forEach(function (axieData) {
@@ -63,7 +66,7 @@ socket.on('loadOtherPlayers', function (_axies) {
                 axies[axieData.id] = item;
             }
             if (itemCount === axieArray.length) {
-                setInterval(function () { updateAxieMovement(); }, 1000 / 60);
+                //myAxie.updateMovement = setInterval(function () { updateAxieMovement(); }, 1000 / UPDATE_PER_SECOND);
                 gameReady = true;
             }
         });
@@ -127,36 +130,52 @@ document.addEventListener('keydown', (event) => {
         myAxie.rotation -= Math.PI / 37;
     }
     switch (event.keyCode) {
-        case 65: // A
-            movement.left = true;
+		case 65: // A
+			keysPressed++;
+			movement.left = true;
             break;
-        case 87: // W
+		case 87: // W
+			keysPressed++;
             movement.up = true;
             break;
-        case 68: // D
-            movement.right = true;
+		case 68: // D
+			keysPressed++;
+			movement.right = true;
             break;
-        case 83: // S
+		case 83: // S
+			keysPressed++;
             movement.down = true;
             break;
-    }
+	}
+	if(!myAxie.sendingMovementData && keysPressed > 0){
+		myAxie.sendingMovementData = true;
+		myAxie.updateMovement = setInterval(function () { updateAxieMovement(); }, 1000 / UPDATE_PER_SECOND);
+	}
 });
 document.addEventListener('keyup', (event) => {
     switch (event.keyCode) {
         case 65: // A
-            //myAxie.position.y += 10;
+			//myAxie.position.y += 10;
+			keysPressed--;
             movement.left = false;
             break;
-        case 87: // W
+		case 87: // W
+			keysPressed--;
             movement.up = false;
             break;
-        case 68: // D
+		case 68: // D
+			keysPressed--;
             movement.right = false;
             break;
-        case 83: // S
+		case 83: // S
+			keysPressed--;
             movement.down = false;
             break;
-    }
+	}
+	if(myAxie.sendingMovementData && keysPressed === 0){
+		myAxie.sendingMovementData = false;
+		clearInterval(myAxie.updateMovement);
+	}
 });
 
 function fetchNewAxie(x, y, callback) {

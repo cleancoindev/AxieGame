@@ -60,6 +60,3 @@ io.on('connection', function(socket){
 server.listen(1337, function(){
     console.log("Server started. Listening on port 1337.");
 });
-setInterval(function() {
-    io.sockets.emit('message', 'hi!');
-  }, 1000);
