@@ -8,14 +8,15 @@ var app = express();
 var server = http.Server(app);
 var io = require('socket.io')(server);
 var port = process.env.PORT || 1337;
+const AXIE_SPEED = 10;
 
 var axies = {};
-app.use(function (req, res, next) {
-    res.setHeader('Access-Control-Allow-Origin', 'http://http://86.143.229.152:1337');
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:1337/');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-    next();
-});
+//app.use(function (req, res, next) {
+    //res.setHeader('Access-Control-Allow-Origin', 'http://http://86.143.229.152:1337');
+    //res.setHeader('Access-Control-Allow-Origin', 'http://localhost:1337/');
+   // res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    //next();
+//});
 app.use('/assets' ,express.static('public'));
 app.get('/', function (req, res) {
     res.sendFile(__dirname + '/index.html');
@@ -44,11 +45,11 @@ io.on('connection', function(socket){
     });
     socket.on('updateAxieMovement', function(movement){
         //console.log('received data');
-        if(movement.up) axies[socket.id].y -=2;
-        if(movement.left) axies[socket.id].x -=2;
-        if(movement.down) axies[socket.id].y +=2;
-        if(movement.right) axies[socket.id].x +=2;
-        socket.emit('updatedAxieMovement', axies);
+        if (movement.up) axies[socket.id].y -= AXIE_SPEED;
+        if (movement.left) axies[socket.id].x -= AXIE_SPEED;
+        if (movement.down) axies[socket.id].y += AXIE_SPEED;
+        if (movement.right) axies[socket.id].x += AXIE_SPEED;
+        io.sockets.emit('updatedAxieMovement', axies);
     });
     socket.on('disconnect', function () {
         delete axies[socket.id];
