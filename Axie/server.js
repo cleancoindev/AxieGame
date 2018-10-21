@@ -2,6 +2,7 @@
 
 console.log(__dirname);
 var express = require('express');
+var request = require('request');
 var http = require('http');
 var path = require('path');
 var app = express();
@@ -55,15 +56,14 @@ io.on('connection', function(socket){
     socket.on('createGameRoom', function () {
         gameRooms[roomIndex++] = createGameRoom();
         gameRooms[id].players[socket.id] = axie[socket.id];
-    }
     });
     socket.on('joinGameRoom', function (id) {
         if (gameRooms[id].players < 4) {
             socket.emit('loadOtherPlayers', gameRooms[id].players);
             gameRooms[id].players[socket.id] = axie[socket.id];
-            
+
         }
-        else //send cant join
+        else { }//send cant join
     });
 
     socket.on('disconnect', function () {
@@ -78,6 +78,14 @@ function createGameRoom() {
     this.players = {};
     this.acceptingPlayers = true;
     return this;
+}
+
+function fetchAxie(index) {
+    request('https://api.axieinfinity.com/v1/axies/' + index, (error, response, body) => {
+        if (!error && response.statusCode == 200) {
+            return JSON.parse(body);
+        }
+    }); 
 }
 
 server.listen(1337, function(){

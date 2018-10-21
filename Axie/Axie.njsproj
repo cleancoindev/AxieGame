@@ -29,6 +29,12 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="BattleLogic.js">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="crap.js">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="public\game.js" />
     <Compile Include="public\pixi\pixi-spine.js" />
     <Compile Include="public\pixi\pixi.min.js" />
