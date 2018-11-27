@@ -82,7 +82,7 @@ function createGameRoom() {
 
 function fetchAxie(index) {
     request('https://api.axieinfinity.com/v1/axies/' + index, (error, response, body) => {
-        if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode === 200) {
             return JSON.parse(body);
         }
     }); 

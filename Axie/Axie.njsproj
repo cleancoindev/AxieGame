@@ -38,6 +38,9 @@
     <Compile Include="public\game.js" />
     <Compile Include="public\pixi\pixi-spine.js" />
     <Compile Include="public\pixi\pixi.min.js" />
+    <Compile Include="public\UI\Ui.js">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="server.js" />
     <Content Include="package.json" />
     <Content Include="index.html">
@@ -47,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="public\" />
+    <Folder Include="public\UI\" />
     <Folder Include="public\pixi\" />
   </ItemGroup>
   <!-- Do not delete the following Import Project.  While this appears to do nothing it is a marker for setting TypeScript properties before our import that depends on them. -->
