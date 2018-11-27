@@ -1,6 +1,19 @@
 'use strict';
 
 console.log(__dirname);
+
+const gameStates = Object.freeze({
+    ACCEPTING_PLAYERS : 0,
+    ROOM_FILLED : 1,
+    STARTING_GAME : 2,
+    AWAITING_PLAYER_INPUT : 3,
+    EXECUTING_TURN : 4,
+    GAME_OVER_CHECK : 5,
+    GAME_ENDING : 6,
+    DISTRIBUTING_REWARDS : 7,
+    DELETING_GAME_ROOM : 8
+});
+
 var express = require('express');
 var request = require('request');
 var http = require('http');
@@ -53,17 +66,39 @@ io.on('connection', function(socket){
         io.sockets.emit('updatedAxieMovement', axies);
     });
 
+    //messages for live battles
     socket.on('createGameRoom', function () {
-        gameRooms[roomIndex++] = createGameRoom();
-        gameRooms[id].players[socket.id] = axie[socket.id];
+        var index = roomIndex++;
+        gameRooms[index] = createGameRoom(index);
+        gameRooms[index].players[socket.id] = {
+            _socket : socket,
+            isReady: false
+        };
     });
     socket.on('joinGameRoom', function (id) {
-        if (gameRooms[id].players < 4) {
-            socket.emit('loadOtherPlayers', gameRooms[id].players);
-            gameRooms[id].players[socket.id] = axie[socket.id];
-
+        if (gameRooms[id].state === gameStates.ACCEPTING_PLAYERS) {
+            //socket.emit('loadOtherPlayers', gameRooms[id].players);
+            gameRooms[id].players[socket.id] = {
+                _socket : socket,
+                isReady: false
+            };
+            if(Object.keys(gameRooms[id].players).length === 2){
+                gameRooms[id].state = gameStates.ROOM_FILLED;
+                gameRooms[id].handleNextState();
+            }
         }
-        else { }//send cant join
+        else { 
+            socket.emit('Error', "Room not accepting players");
+        }
+    });
+
+    socket.on('playerReady', function(id){
+        if(gameRooms[id]){
+            if(gameRooms[id].players[socket.id]){
+                gameRooms[id].players[socket.id].isReady = true;
+                gameRooms[id].handleNextState();
+            }
+        }
     });
 
     socket.on('disconnect', function () {
@@ -73,10 +108,50 @@ io.on('connection', function(socket){
 });
 
 
-function createGameRoom() {
-    //this.id = _id;
+function createGameRoom(_id) {
+    const GAME_TICKS = 1000;
+    var room = this;
+    var turnTimer = {};
+    var turnTickCounter = 0;
+    this.id = _id;
+    this.state = gameStates.ACCEPTING_PLAYERS;
     this.players = {};
-    this.acceptingPlayers = true;
+    this.axies = [];
+    this.handleNextState = function(){
+        switch(room.state)
+        {
+            case gameStates.ROOM_FILLED:
+            Object.keys(room.players).forEach(player => {
+                player.emit('RoomFilled');
+            });
+            room.state = gameStates.STARTING_GAME;
+            break;
+            case gameStates.STARTING_GAME:
+            var playersReady = false;
+            Object.keys(room.players).forEach(player => {
+                playersReady = player.isReady;
+            });
+            if(playersReady){
+                room.broadcastMessage('playersReady');
+            }
+            room.state = gameStates.AWAITING_PLAYER_INPUT;
+            turnTimer = setInterval(room.checkPlayerInput, GAME_TICKS);
+            break;
+        }
+    };
+    this.checkPlayerInput = function(){
+        if(turnTickCounter === 15){
+            clearInterval(turnTimer);
+            turnTickCounter = 0;
+            room.state = gameStates.EXECUTING_TURN;
+            room.handleNextState();
+        }
+    };
+    this.broadcastMessage = function(messageType) {
+        Object.keys(room.players).foreach(player => {
+            player.socket.emit(messageType);
+        });
+    };
     return this;
 }
 
