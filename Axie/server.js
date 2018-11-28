@@ -117,6 +117,7 @@ function createGameRoom(_id) {
     this.state = gameStates.ACCEPTING_PLAYERS;
     this.players = {};
     this.axies = [];
+    this.currentAttacker = {};
     this.handleNextState = function(){
         switch(room.state)
         {
@@ -136,7 +137,13 @@ function createGameRoom(_id) {
             }
             room.state = gameStates.AWAITING_PLAYER_INPUT;
             turnTimer = setInterval(room.checkPlayerInput, GAME_TICKS);
-            break;
+                break;
+            case gameStates.EXECUTING_TURN:
+                //do something to compute turn outcome
+                //send outcome to both parties
+                //check if any team is dead
+                break;
+
         }
     };
     this.checkPlayerInput = function(){
