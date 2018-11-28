@@ -1,21 +1,21 @@
 ﻿var team1 = [];
 var team2 = [];
 
-function getAxieBattleEntity(_axie) {
-    var battleAxie = {};
-    battleAxie.stats = _axie.stats;
-    battleAxie.class = _axie.class;
-    battleAxie.remainingHp = _axie.stats.hp;
-    battleAxie.skills = [];
-    battleAxie.skills[0] = _axie.parts.tail.moves[0];
-    battleAxie.skills[0].class = _axie.parts.tail.class;
-    battleAxie.skills[1] = _axie.parts.mouth.moves[0];
-    battleAxie.skills[1].class = _axie.parts.mouth.class;
-    battleAxie.skills[2] = _axie.parts.horn.moves[0];
-    battleAxie.skills[2].class = _axie.parts.horn.class;
-    battleAxie.skills[3] = _axie.parts.back.moves[0];
-    battleAxie.skills[3].class = _axie.parts.back.class;
-    return battleAxie;
+class AxieBattleEntity {
+    constructor(_axie){
+        this.stats = _axie.stats;
+        this.class = _axie.class;
+        this.remainingHp = _axie.stats.hp;
+        this.skills = [];
+        this.skills[0] = _axie.parts.tail.moves[0];
+        this.skills[0].class = _axie.parts.tail.class;
+        this.skills[1] = _axie.parts.mouth.moves[0];
+        this.skills[1].class = _axie.parts.mouth.class;
+        this.skills[2] = _axie.parts.horn.moves[0];
+        this.skills[2].class = _axie.parts.horn.class;
+        this.skills[3] = _axie.parts.back.moves[0];
+        this.skills[3].class = _axie.parts.back.class;
+    }
 }
 
 function getDamage(attackSkill, defendSkill, attacker, defender) {
