@@ -74,6 +74,7 @@ io.on('connection', function(socket){
             _socket : socket,
             isReady: false
         };
+        socket.emit('roomIdCreation', index);
     });
     socket.on('joinGameRoom', function (id) {
         if (gameRooms[id].state === gameStates.ACCEPTING_PLAYERS) {
@@ -101,6 +102,17 @@ io.on('connection', function(socket){
         }
     });
 
+    socket.on('roomIdsRequeted', function(){
+        var idList = Object.keys(gameRooms).filter(room =>
+            gameRooms[room].state === gameStates.ACCEPTING_PLAYERS
+            );
+        socket.emit('roomIds', idList);
+    });
+
+    socket.on('axieDataTransmitted', function(data){
+
+    });
+
     socket.on('disconnect', function () {
         delete axies[socket.id];
         socket.broadcast.emit('userDisconnected', socket.id);
@@ -116,21 +128,22 @@ function createGameRoom(_id) {
     this.id = _id;
     this.state = gameStates.ACCEPTING_PLAYERS;
     this.players = {};
-    this.axies = [];
+    this.party = [];
+    this.opponents = [];
     this.currentAttacker = {};
     this.handleNextState = function(){
         switch(room.state)
         {
             case gameStates.ROOM_FILLED:
             Object.keys(room.players).forEach(player => {
-                player.emit('RoomFilled');
+                room.players[player].socket.emit('RoomFilled');
             });
             room.state = gameStates.STARTING_GAME;
             break;
             case gameStates.STARTING_GAME:
             var playersReady = false;
             Object.keys(room.players).forEach(player => {
-                playersReady = player.isReady;
+                playersReady = room.players[player].isReady;
             });
             if(playersReady){
                 room.broadcastMessage('playersReady');
