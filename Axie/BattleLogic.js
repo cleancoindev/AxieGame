@@ -2,9 +2,10 @@
 var team2 = [];
 
 class AxieBattleEntity {
-    constructor(_axie){
+    constructor(_axie, pos){
         this.stats = _axie.stats;
         this.class = _axie.class;
+        this.position = pos;
         this.remainingHp = _axie.stats.hp;
         this.skills = [];
         this.skills[0] = _axie.parts.tail.moves[0];
@@ -15,6 +16,34 @@ class AxieBattleEntity {
         this.skills[2].class = _axie.parts.horn.class;
         this.skills[3] = _axie.parts.back.moves[0];
         this.skills[3].class = _axie.parts.back.class;
+    }
+    getDamage(attackSkill, defendSkill, defender){
+        var damage = attackSkill.attack - defendSkill.defense +
+        classBonus(attackSkill.class, defendSkill.class) +
+        classBonus(this.class.defenderAxie.class) +
+        positionBonus(this.position, defender.position);
+    return damage;
+    };
+    getHitChance(attackSkill, defendSkill, defender){
+        var chance = attackSkill.accuracy +
+        this.stats.skill / 3 -
+        defender.stats.speed / 8 +
+        classAccBonus(attackSkill.class, defendSkill.class) +
+        positionAccBonus(attackSkill.class, defendSkill.class);
+        return chance;
+    };
+    getCounterChance(defenderAxie) {
+        return defenderAxie.stats.morale / 2 - this.stats.speed / 4;
+    }
+    getCritChance(defenderAxie) {
+        return this.stats.morale / 2 - defenderAxie.stats.speed / 4;
+    }
+    getLastStandCount() {
+        return this.stats.morale / 10;
+    }
+    
+    TriggerLastStand(dmg,) {
+        return dmg - this.remainingHp >= 0 && dmg - this.remainingHp <= this.remainingHp * this.stats.morale / 100;
     }
 }
 
@@ -30,7 +59,8 @@ function getHitChance(attackSkill, defendSkill, attacker, defender) {
         attacker.stats.skill / 3 -
         defender.stats.speed / 8 +
         classAccBonus(attackSkill.class, defendSkill.class) +
-        positionAccBonus(attackSkill.class, defendSkill.class);
+        positionAccBonus(attackSkill.position, defendSkill.position);
+        return chance;
 }
 function getCounterChance(attackerAxie, defenderAxie) {
     return defenderAxie.stats.morale / 2 - attackerAxie.stats.speed / 4;
@@ -209,3 +239,5 @@ function positionAccBonus(attackerPos, defenderPos) {
     }
     return bonus;
 }
+
+module.exports = AxieBattleEntity;

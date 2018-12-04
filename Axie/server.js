@@ -29,6 +29,7 @@ var axies = {};
 var entryPool = {}; 
 var gameRooms = {};
 var roomIndex = 1;
+var axieEntity = require('./BattleLogic.js');
 //app.use(function (req, res, next) {
     //res.setHeader('Access-Control-Allow-Origin', 'http://http://86.143.229.152:1337');
     //res.setHeader('Access-Control-Allow-Origin', 'http://localhost:1337/');
@@ -110,7 +111,10 @@ io.on('connection', function(socket){
     });
 
     socket.on('axieDataTransmitted', function(data){
-
+        socket.axieData = data;
+    });
+    socket.on('turnDataTransmitted', function(data){
+        
     });
 
     socket.on('disconnect', function () {
@@ -128,6 +132,7 @@ function createGameRoom(_id) {
     this.id = _id;
     this.state = gameStates.ACCEPTING_PLAYERS;
     this.players = {};
+    this.axies = [];
     this.party = [];
     this.opponents = [];
     this.currentAttacker = {};
@@ -135,21 +140,22 @@ function createGameRoom(_id) {
         switch(room.state)
         {
             case gameStates.ROOM_FILLED:
-            Object.keys(room.players).forEach(player => {
-                room.players[player].socket.emit('RoomFilled');
-            });
-            room.state = gameStates.STARTING_GAME;
-            break;
+                Object.keys(room.players).forEach(id => {
+                    room.players[id].socket.emit('RoomFilled');
+                });
+                room.state = gameStates.STARTING_GAME;
+                break;
             case gameStates.STARTING_GAME:
-            var playersReady = false;
-            Object.keys(room.players).forEach(player => {
-                playersReady = room.players[player].isReady;
-            });
-            if(playersReady){
-                room.broadcastMessage('playersReady');
-            }
-            room.state = gameStates.AWAITING_PLAYER_INPUT;
-            turnTimer = setInterval(room.checkPlayerInput, GAME_TICKS);
+                var playersReady = false;
+                Object.keys(room.players).forEach(id => {
+                    playersReady = room.players[id].isReady;
+                });
+                if(playersReady){
+                    room.broadcastMessage('playersReady');
+                    fillAxies();
+                    room.state = gameStates.AWAITING_PLAYER_INPUT;
+                    turnTimer = setInterval(room.checkPlayerInput, GAME_TICKS);
+                }
                 break;
             case gameStates.EXECUTING_TURN:
                 //do something to compute turn outcome
@@ -166,6 +172,18 @@ function createGameRoom(_id) {
             room.state = gameStates.EXECUTING_TURN;
             room.handleNextState();
         }
+    };
+    this.fillAxies = function(){
+        var index = 0;
+        Object.keys(room.player).forEach(id => {
+            room.players[id].socket.axieData.foreach(axie => {
+                room.axies.push({
+                    data: axieEntity(axie.json, axie.position),
+                    team : index
+                });
+            });
+        });
+        index++;
     };
     this.broadcastMessage = function(messageType) {
         Object.keys(room.players).foreach(player => {
