@@ -3,6 +3,7 @@ var team2 = [];
 
 class AxieBattleEntity {
     constructor(_axie, pos){
+        this.id = _axie.id;
         this.stats = _axie.stats;
         this.class = _axie.class;
         this.position = pos;
@@ -17,19 +18,19 @@ class AxieBattleEntity {
         this.skills[3] = _axie.parts.back.moves[0];
         this.skills[3].class = _axie.parts.back.class;
     }
-    getDamage(attackSkill, defendSkill, defender){
-        var damage = attackSkill.attack - defendSkill.defense +
-        classBonus(attackSkill.class, defendSkill.class) +
+    getDamage(attIndex, defIndex, defender){
+        var damage = this.skills[attIndex].attack - defender.skills[defIndex].defense +
+        classBonus(this.skills[attIndex].class, defender.skills[defIndex].class) +
         classBonus(this.class.defenderAxie.class) +
         positionBonus(this.position, defender.position);
     return damage;
     };
-    getHitChance(attackSkill, defendSkill, defender){
-        var chance = attackSkill.accuracy +
+    getHitChance(attIndex, defIndex, defender){
+        var chance = this.skills[attIndex].accuracy +
         this.stats.skill / 3 -
         defender.stats.speed / 8 +
-        classAccBonus(attackSkill.class, defendSkill.class) +
-        positionAccBonus(attackSkill.class, defendSkill.class);
+        classAccBonus(this.skills[attIndex].class, defender.skills[defIndex].class) +
+        positionAccBonus(this.position, defender.position);
         return chance;
     };
     getCounterChance(defenderAxie) {
@@ -42,9 +43,79 @@ class AxieBattleEntity {
         return this.stats.morale / 10;
     }
     
-    TriggerLastStand(dmg,) {
+    triggerLastStand(dmg) {
         return dmg - this.remainingHp >= 0 && dmg - this.remainingHp <= this.remainingHp * this.stats.morale / 100;
     }
+    findTarget(opponents){
+        var sortedOpp = opponents.sort((a, b) => a.position - b.position);
+        var map = [];
+        var row = 0;
+        switch(this.position){
+            case 0:
+            case 4:
+            case 8:
+                row = 2;
+                break
+            case 1:
+            case 6:
+                row = 3;
+                break;
+            case 2:
+            case 7:
+                 row = 1;
+                 break;
+            case 3: 
+                 row = 4;
+                 break;
+            case 5:
+                row = 0;
+                break;
+        }
+        sortedOpp.foreach(opp =>{
+            if(opp.remainingHp > 0){
+                switch(opp.position){
+                    case 0:
+                        map[1][2] = opp;
+                        break;
+                    case 1:
+                        map[2][3] = opp;
+                        break;
+                    case 2:
+                        map[2][1] = opp;
+                        break;
+                    case 3:
+                        map[3][4] = opp;
+                        break;
+                    case 4:
+                        map[3][2] = opp;
+                        break;
+                    case 5:
+                        map[3][0] = opp;
+                        break;
+                    case 6:
+                        map[4][3] = opp;
+                        break;
+                    case 7:
+                        map[4][1] = opp;
+                        break;
+                    case 8:
+                        map[5][2] = opp;
+                        break;
+                }
+            }
+        });
+        for (var i = 1 ; i < 5 ; i++){
+            for (var j = 0 ; j < 6 ; j++){
+                
+            }
+        }
+    }
+
+}
+
+function GetDistance()
+{
+
 }
 
 function getDamage(attackSkill, defendSkill, attacker, defender) {

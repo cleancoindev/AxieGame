@@ -82,7 +82,8 @@ io.on('connection', function(socket){
             //socket.emit('loadOtherPlayers', gameRooms[id].players);
             gameRooms[id].players[socket.id] = {
                 _socket : socket,
-                isReady: false
+                isReady: false,
+                turnData : []
             };
             if(Object.keys(gameRooms[id].players).length === 2){
                 gameRooms[id].state = gameStates.ROOM_FILLED;
@@ -114,7 +115,8 @@ io.on('connection', function(socket){
         socket.axieData = data;
     });
     socket.on('turnDataTransmitted', function(data){
-        
+        gameRooms[data.roomId].player[socket.id].turnData = data.turnData;
+        socket.emit('turnDataRecieved');
     });
 
     socket.on('disconnect', function () {
@@ -129,12 +131,12 @@ function createGameRoom(_id) {
     var room = this;
     var turnTimer = {};
     var turnTickCounter = 0;
+    var index = 0;
     this.id = _id;
     this.state = gameStates.ACCEPTING_PLAYERS;
     this.players = {};
     this.axies = [];
-    this.party = [];
-    this.opponents = [];
+    this.teams = {};
     this.currentAttacker = {};
     this.handleNextState = function(){
         switch(room.state)
@@ -152,12 +154,20 @@ function createGameRoom(_id) {
                 });
                 if(playersReady){
                     room.broadcastMessage('playersReady');
-                    fillAxies();
+                    room.fillAxies();
                     room.state = gameStates.AWAITING_PLAYER_INPUT;
+                    room.axies = axies.sort((a, b) => {
+                        return a.entity.stats.speed > b.data.stats.speed ? 1 : 0;
+                    });
+                    room.currentAttacker = axies[index];
+                    room.broadcastMessage('newTurn');
                     turnTimer = setInterval(room.checkPlayerInput, GAME_TICKS);
                 }
                 break;
             case gameStates.EXECUTING_TURN:
+            var attIndex = room.players[currentAttacker.team].turnData[currentAttacker.entity.id].index;
+            
+            currentAttacker.entity.getHitChance(attIndex, defIndex, defender);
                 //do something to compute turn outcome
                 //send outcome to both parties
                 //check if any team is dead
@@ -172,18 +182,20 @@ function createGameRoom(_id) {
             room.state = gameStates.EXECUTING_TURN;
             room.handleNextState();
         }
+        turnTickCounter++;
     };
     this.fillAxies = function(){
-        var index = 0;
         Object.keys(room.player).forEach(id => {
+            room.teams[id] = [];
             room.players[id].socket.axieData.foreach(axie => {
+                var newAxie = new axieEntity(axie.json, axie.position)
+                room.teams[id].push(newAxie);
                 room.axies.push({
-                    data: axieEntity(axie.json, axie.position),
-                    team : index
+                    entity: newAxie,
+                    team : id
                 });
             });
         });
-        index++;
     };
     this.broadcastMessage = function(messageType) {
         Object.keys(room.players).foreach(player => {
