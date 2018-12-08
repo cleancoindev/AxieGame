@@ -49,73 +49,103 @@ class AxieBattleEntity {
     findTarget(opponents){
         var sortedOpp = opponents.sort((a, b) => a.position - b.position);
         var map = [];
+        var targets = [];
         var row = 0;
+        var distance = 0;
+        var smallestDist = 10000;
         switch(this.position){
             case 0:
             case 4:
             case 8:
-                row = 2;
+                row = 0;
                 break
             case 1:
             case 6:
-                row = 3;
+                row = 1;
                 break;
             case 2:
             case 7:
-                 row = 1;
+                 row = -1;
                  break;
             case 3: 
-                 row = 4;
+                 row = 2;
                  break;
             case 5:
-                row = 0;
+                row = -2;
                 break;
         }
+        var coord = {};
         sortedOpp.foreach(opp =>{
             if(opp.remainingHp > 0){
                 switch(opp.position){
                     case 0:
                         map[1][2] = opp;
+                        coord.x = 1;
+                        coord.y = 0;
                         break;
                     case 1:
                         map[2][3] = opp;
+                        coord.x = 2;
+                        coord.y = 1;
                         break;
                     case 2:
                         map[2][1] = opp;
+                        coord.x = 2;
+                        coord.y = -1;
                         break;
                     case 3:
                         map[3][4] = opp;
+                        coord.x = 3;
+                        coord.y = 2;
                         break;
                     case 4:
                         map[3][2] = opp;
+                        coord.x = 3;
+                        coord.y = 0;
                         break;
                     case 5:
                         map[3][0] = opp;
+                        coord.x = 3;
+                        coord.y = -2;
                         break;
                     case 6:
                         map[4][3] = opp;
+                        coord.x = 4;
+                        coord.y = 1;
                         break;
                     case 7:
                         map[4][1] = opp;
+                        coord.x = 4;
+                        coord.y = -1;
                         break;
                     case 8:
                         map[5][2] = opp;
+                        coord.x = 5;
+                        coord.y = 0;
                         break;
+                }
+                distance = getDistance(row, coord.x, coord.y);
+                if (distance < smallestDist) {
+                    smallestDist = distance;
+                    targets = [];
+                    targets[0] = opp;
+                }
+                else if (smallestDist === distance) {
+                    targets.push(opp);
                 }
             }
         });
-        for (var i = 1 ; i < 5 ; i++){
-            for (var j = 0 ; j < 6 ; j++){
-                
-            }
+        if (targets.length === 1) return targets[0];
+        else {
+            var pick = Math.floor(Math.random() * targets.length);
+            return targets[pick];
         }
     }
-
 }
 
-function GetDistance()
+function getDistance(y1, x2, y2)
 {
-
+    return Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2, 2));
 }
 
 function getDamage(attackSkill, defendSkill, attacker, defender) {

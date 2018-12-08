@@ -165,10 +165,33 @@ function createGameRoom(_id) {
                 }
                 break;
             case gameStates.EXECUTING_TURN:
-            var attIndex = room.players[currentAttacker.team].turnData[currentAttacker.entity.id].index;
-            
-            currentAttacker.entity.getHitChance(attIndex, defIndex, defender);
-                //do something to compute turn outcome
+                var attIndex = room.players[currentAttacker.team].turnData[currentAttacker.entity.id].index;
+                //TODO check for non dmg skills
+                var opponentID = {};
+                Object.keys(room.players).forEach(id => {
+                    if (currentAttacker.team != id) {
+                        opponentId = id;
+                        break;
+                    }
+                });
+                var target = currentAttacker.entity.getTargets(teams[opponentID]);
+                var defIndex = room.players[target.team].turnData[target.entity.id].index;
+                var chance = currentAttacker.entity.getHitChance(attIndex, defIndex, target);
+                if (Math.floor(Math.random() * 100 + 1) <= chance) {
+                    //hit
+                    var damage = currentAttacker.entity.getDamage(attIndex, defIndex, target);
+                    target.remainingHp -= damage;
+                    if (target.remainingHp > 0) {
+                        var counterChance = currentAttacker.entity.getCounterChance(target);
+                        if (Math.floor(Math.random() * 100 + 1) <= counterChance) {
+                            var counterDamage = target.entity.getDamage(defIndex, attIndex, currentAttacker);
+                            currentAttacker.remainingHp -= counterDamage;
+                        }
+                    }
+                    //send data to clients
+
+                    //
+                }
                 //send outcome to both parties
                 //check if any team is dead
                 break;
